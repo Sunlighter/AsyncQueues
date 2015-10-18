@@ -15,7 +15,7 @@ and the lock will not be acquired until that number of items is available (unles
 smaller number of items, possibly zero). The act of acquiring the lock is awaitable and works with `CancellationToken`.
 
 Once the lock is acquired, you can inspect the items covered by the lock. Then you release the lock, indicating the number
-of items you actually consumed, which can be any number from zero up to the number requested.
+of items you actually consumed, which can be any number from zero up to the number obtained.
 
 Writes work exactly the same way, except that you acquire a lock on one ore more *free spaces* at the end of the queue. You
 cannot inspect the free spaces, but when you release the lock you can provide zero or more items to put into them.
