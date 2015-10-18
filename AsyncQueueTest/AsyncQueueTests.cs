@@ -186,9 +186,10 @@ namespace AsyncQueueTest
 
             while (!src1eof || !src2eof)
             {
-                var starters = Utils.OperationStarters<int, string>();
-                if (!src1eof) starters = starters.Add(1, Utils.StartableGet(src1, a => a, null));
-                if (!src2eof) starters = starters.Add(2, Utils.StartableGet(src2, a => a, null));
+                var starters = Utils.OperationStarters<int, string>()
+                    .AddIf(!src1eof, 1, Utils.StartableGet(src1, a => a, null))
+                    .AddIf(!src2eof, 2, Utils.StartableGet(src2, a => a, null));
+
                 var result = await starters.CompleteAny(CancellationToken.None);
 
                 if (result.Item2 == null)

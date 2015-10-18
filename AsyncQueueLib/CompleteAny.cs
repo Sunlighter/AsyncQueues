@@ -234,6 +234,17 @@ namespace AsyncQueueLib
             return list.Add(new Tuple<K, CancellableOperationStarter<V>>(key, value));
         }
 
+        public static ImmutableList<Tuple<K, CancellableOperationStarter<V>>> AddIf<K, V>
+        (
+            this ImmutableList<Tuple<K, CancellableOperationStarter<V>>> list,
+            bool condition,
+            K key,
+            CancellableOperationStarter<V> value
+        )
+        {
+            return condition ? list.Add(new Tuple<K, CancellableOperationStarter<V>>(key, value)) : list;
+        }
+
         public static Task<Tuple<K, V>> CompleteAny<K, V>(this ImmutableList<Tuple<K, CancellableOperationStarter<V>>> operationStarters, CancellationToken ctoken)
         {
             object syncRoot = new object();
