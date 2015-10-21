@@ -142,6 +142,65 @@ namespace AsyncQueueTest
             t.Wait();
         }
 
+        private async Task ExtMethodQueueTestAsync()
+        {
+            AsyncQueue<string> q = new AsyncQueue<string>(5);
+
+            Func<Task> producer = async delegate ()
+            {
+                #region
+
+                for (int i = 0; i < 20; ++i)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Writing {i}...");
+                    await q.Enqueue($"Value: {i}", CancellationToken.None);
+                }
+
+                System.Diagnostics.Debug.WriteLine("Writing EOF...");
+
+                q.WriteEof();
+
+                #endregion
+            };
+
+            Func<Task> consumer = async delegate ()
+            {
+                #region
+
+                bool more = true;
+                while (more)
+                {
+                    System.Diagnostics.Debug.WriteLine("Reading...");
+                    Option<string> ostr = await q.Dequeue(CancellationToken.None);
+
+                    if (ostr.HasValue)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Read {ostr.Value}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine("Read EOF...");
+                        more = false;
+                    }
+
+                }
+
+                #endregion
+            };
+
+            Task tProducer = Task.Run(producer);
+            Task tConsumer = Task.Run(consumer);
+
+            await Task.WhenAll(tProducer, tConsumer);
+        }
+
+        [TestMethod]
+        public void ExtMethodQueueTest()
+        {
+            Task t = Task.Run(new Func<Task>(ExtMethodQueueTestAsync));
+            t.Wait();
+        }
+
         #region Resources for GetAnyTest
 
         private class Item
@@ -222,8 +281,8 @@ namespace AsyncQueueTest
         {
             Random r = new Random((int)((System.Diagnostics.Stopwatch.GetTimestamp() >> 3) & 0x7FFFFFFF));
 
-            List<Item> items1 = GenerateItems(r, 30, 0, 4000);
-            List<Item> items2 = GenerateItems(r, 30, 1000, 5000);
+            List<Item> items1 = GenerateItems(r, 100, 0, 6000);
+            List<Item> items2 = GenerateItems(r, 100, 1000, 7000);
 
             AsyncQueue<string> q1 = new AsyncQueue<string>(3);
             AsyncQueue<string> q2 = new AsyncQueue<string>(3);

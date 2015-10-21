@@ -301,20 +301,20 @@ namespace AsyncQueueLib
                 {
                     if (fi >= 0)
                     {
-                        tcs.SetResult(new Tuple<K, V>(operationStarters[fi].Item1, firstResult));
+                        tcs.PostResult(new Tuple<K, V>(operationStarters[fi].Item1, firstResult));
                     }
                     else
                     {
-                        tcs.SetException(new OperationCanceledException(ctoken));
+                        tcs.PostException(new OperationCanceledException(ctoken));
                     }
                 }
                 else if (exc.Count == 1)
                 {
-                    tcs.SetException(exc[0]);
+                    tcs.PostException(exc[0]);
                 }
                 else
                 {
-                    tcs.SetException(new AggregateException(exc));
+                    tcs.PostException(new AggregateException(exc));
                 }
 
                 if (ctr.HasValue) { ctr.Value.Dispose(); }
