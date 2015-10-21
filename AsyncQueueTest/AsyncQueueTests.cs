@@ -300,5 +300,93 @@ namespace AsyncQueueTest
             Task t = Task.Run(new Func<Task>(GetAnyTestAsync));
             t.Wait();
         }
+
+        private async Task CompleteAnyWithCancellationAsync()
+        {
+            AsyncQueue<string> q1 = new AsyncQueue<string>(5);
+            AsyncQueue<string> q2 = new AsyncQueue<string>(5);
+
+            Func<Task> producer1 = async delegate ()
+            {
+                await Task.Delay(2500);
+                await q1.Enqueue("one", CancellationToken.None);
+                q1.WriteEof();
+            };
+
+            Func<Task> producer2 = async delegate ()
+            {
+                await Task.Delay(5500);
+                await q2.Enqueue("two", CancellationToken.None);
+                q2.WriteEof();
+            };
+
+            Func<Task> consumer = async delegate ()
+            {
+                bool q1eof = false;
+                bool q2eof = false;
+                while (!q1eof || !q2eof)
+                {
+                    Tuple<int, string> r1 = null;
+
+                    using (CancellationTokenSource s1 = new CancellationTokenSource(1000))
+                    {
+                        try
+                        {
+                            r1 = await Utils.OperationStarters<int, string>()
+                                .AddIf(!q1eof, 1, Utils.StartableGet(q1, x => x, null))
+                                .AddIf(!q2eof, 2, Utils.StartableGet(q2, x => x, null))
+                                .CompleteAny(s1.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+
+                        }
+                    }
+
+                    if (r1 == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Cancelled (because of timeout)");
+                    }
+                    else if (r1.Item1 == 1)
+                    {
+                        if (r1.Item2 == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Got EOF from 1");
+                            q1eof = true;
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Got {r1.Item2} from 1");
+                        }
+                    }
+                    else
+                    {
+                        Assert.AreEqual(2, r1.Item1);
+                        if (r1.Item2 == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine("Got EOF from 2");
+                            q2eof = true;
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Got {r1.Item2} from 2");
+                        }
+                    }
+                }
+            };
+
+            Task p1 = Task.Run(producer1);
+            Task p2 = Task.Run(producer2);
+            Task c = Task.Run(consumer);
+
+            await Task.WhenAll(p1, p2, c);
+        }
+
+        [TestMethod]
+        public void CompleteAnyWithCancellation()
+        {
+            Task t = Task.Run(new Func<Task>(CompleteAnyWithCancellationAsync));
+            t.Wait();
+        }
     }
 }
