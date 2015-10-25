@@ -1,12 +1,10 @@
 # AsyncQueues
-A C# implementation of async queues, suitable for producer-consumer, etc.
-
-Visual Studio 2015, .NET 4.6, C# 6.0. Requires Microsoft's [Immutable Collections](http://www.nuget.org/packages/System.Collections.Immutable).
+A C# implementation of async queues, suitable for producer-consumer, etc, written for Visual Studio 2015, .NET 4.6, and C# 6.0. Requires Microsoft's [Immutable Collections](http://www.nuget.org/packages/System.Collections.Immutable).
 
 There are already a number of implementations of async queues (also known as blocking queues), including the `BlockingQueue`
 class in the .NET framework itself, and the TPL DataFlow library, but there is no consensus on what kinds of features should
 be available. The `BlockingQueue` in .NET is not awaitable, for example. I've actually written several different
-implementations of my own. This one should be general enough for many uses.
+implementations of my own. This one should be general enough for many uses, although it is thoroughly `async`.
 
 You can create queues of finite or infinite capacity.
 
