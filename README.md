@@ -31,7 +31,7 @@ work out a protocol so that `WriteEof` is called exactly once, *after* all the t
 
 The complex protocol was adopted because it allows operations such as "Get Any" and "Put Any." These operations work by
 attempting to acquire all the locks required, but once any acquisition succeeds, all the other attempts are canceled. To
-avoid a race condition between completion and cancellation, even of one of the canceled attempts completes, it can
+avoid a race condition between completion and cancellation, even if one of the canceled attempts completes, it can
 still be canceled by releasing the lock with zero items produced or consumed. This provides for a sort of "two-phase
 cancellation" which resembles two-phase commits.
 
