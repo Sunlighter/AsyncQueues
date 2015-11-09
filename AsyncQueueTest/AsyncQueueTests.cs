@@ -232,9 +232,7 @@ namespace AsyncQueueTest
             foreach(Item i in items)
             {
                 await Task.Delay(i.delay);
-                //System.Diagnostics.Debug.WriteLine($"Putting: {prefix + i.value}");
                 await dest.Enqueue(prefix + i.value, CancellationToken.None);
-                //System.Diagnostics.Debug.WriteLine($"Done Putting: {prefix + i.value}");
             }
 
             dest.WriteEof();

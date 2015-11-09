@@ -303,39 +303,10 @@ namespace AsyncQueueLib
 
             ImmutableHashSet<int> waits = ImmutableHashSet<int>.Empty;
             CancellableOperation<V>[] operations = new CancellableOperation<V>[operationStarters.Count];
-            //Task[] continuations = new Task[operationStarters.Count];
             int? firstIndex = null;
             V firstResult = default(V);
 
             CancellationTokenRegistration? ctr = null;
-
-#if false
-            Func<Task> watchdog = async delegate ()
-            {
-                await Task.Delay(TimeSpan.FromMinutes(0.6));
-                if (tcs.Task.Status == TaskStatus.WaitingForActivation)
-                {
-                    bool taken = Monitor.TryEnter(syncRoot, 1);
-                    if (taken) Monitor.Exit(syncRoot);
-
-                    System.Diagnostics.Debug.WriteLine($"syncRoot available: {taken}");
-                    foreach(int i in Enumerable.Range(0, continuations.Length))
-                    {
-                        if (continuations[i] == null)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"continuations[{i}] = null");
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"continuations[{i}].Status = {continuations[i].Status}");
-                        }
-                    }
-                    System.Diagnostics.Debugger.Break();
-                }
-            };
-
-            Task _dummy = Task.Run(watchdog);
-#endif
 
             Action<CancellationTokenRegistration> setRegistration = delegate (CancellationTokenRegistration value)
             {
@@ -354,8 +325,7 @@ namespace AsyncQueueLib
 
             Action deliverFinalResult = delegate ()
             {
-                //System.Diagnostics.Debug.WriteLine($"Begin: deliverFinalResult {(firstIndex.HasValue ? firstIndex.Value.ToString() : "null")}");
-#region
+                #region
 
                 List<Exception> exc = new List<Exception>();
 
@@ -400,7 +370,7 @@ namespace AsyncQueueLib
 
                 if (ctr.HasValue) { ctr.Value.PostDispose(); }
 
-#endregion
+                #endregion
             };
 
             Action unwind = delegate ()
@@ -435,8 +405,6 @@ namespace AsyncQueueLib
             {
                 lock(syncRoot)
                 {
-                    //System.Diagnostics.Debug.WriteLine($"Begin: handleItemCompletion {i}");
-
                     System.Diagnostics.Debug.Assert(waits.Contains(i));
                     waits = waits.Remove(i);
 
@@ -498,8 +466,6 @@ namespace AsyncQueueLib
                                 handleItemCompletion(i);
                             }
                         );
-
-                        //System.Diagnostics.Debug.WriteLine($"Continuations[{i}] status: {continuations[i].Status}");
                     }
                 }
 
