@@ -6,6 +6,8 @@ class in the .NET framework itself, and the TPL DataFlow library, but there is n
 be available. The `BlockingQueue` in .NET is not awaitable, for example. I've actually written several different
 implementations of my own. This one should be general enough for many uses, although it is thoroughly `async`.
 
+Some tests are included.
+
 You can create queues of finite or infinite capacity.
 
 You do reads by acquiring a lock on the read end of the queue. You can ask to lock any positive integer number of items,
