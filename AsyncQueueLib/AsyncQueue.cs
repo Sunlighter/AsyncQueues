@@ -256,7 +256,7 @@ namespace AsyncQueueLib
 
                     if (opt.Value.ctr.HasValue)
                     {
-                        opt.Value.ctr.Value.Dispose();
+                        opt.Value.ctr.Value.PostDispose();
                     }
                 }
             }
@@ -272,7 +272,7 @@ namespace AsyncQueueLib
                 }
                 else
                 {
-                    ctr.Dispose();
+                    ctr.PostDispose();
                 }
             }
         }
@@ -338,7 +338,7 @@ namespace AsyncQueueLib
 
                     if (opt.Value.ctr.HasValue)
                     {
-                        opt.Value.ctr.Value.Dispose();
+                        opt.Value.ctr.Value.PostDispose();
                     }
                 }
             }
@@ -354,7 +354,7 @@ namespace AsyncQueueLib
                 }
                 else
                 {
-                    ctr.Dispose();
+                    ctr.PostDispose();
                 }
             }
         }
@@ -434,7 +434,7 @@ namespace AsyncQueueLib
                     ww.k.PostResult(new AcquireWriteSucceeded(readPtr + items.Count, ww.desiredSpace));
                     if (ww.ctr.HasValue)
                     {
-                        ww.ctr.Value.Dispose();
+                        ww.ctr.Value.PostDispose();
                     }
                 }
             }
@@ -455,7 +455,7 @@ namespace AsyncQueueLib
                     wr.k.PostResult(new AcquireReadSucceeded<T>(readPtr, readLocked.Value == 0 ? ImmutableList<T>.Empty : items.GetRange(0, readLocked.Value)));
                     if (wr.ctr.HasValue)
                     {
-                        wr.ctr.Value.Dispose();
+                        wr.ctr.Value.PostDispose();
                     }
 
                     if (readLocked.Value == 0)
@@ -466,7 +466,7 @@ namespace AsyncQueueLib
                             wr2.k.PostResult(new AcquireReadSucceeded<T>(readPtr, ImmutableList<T>.Empty));
                             if (wr2.ctr.HasValue)
                             {
-                                wr2.ctr.Value.Dispose();
+                                wr2.ctr.Value.PostDispose();
                             }
                         }
                     }

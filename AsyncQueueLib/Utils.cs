@@ -62,7 +62,7 @@ namespace AsyncQueueLib
                                 action(task2);
                                 tcs.SetResult(true);
                             }
-                            catch(Exception exc)
+                            catch (Exception exc)
                             {
                                 tcs.SetException(exc);
                             }
@@ -75,9 +75,10 @@ namespace AsyncQueueLib
             return tcs.Task;
         }
 
+        [Obsolete]
         public static bool IsCompletedNormally(this Task t)
         {
-            return t.IsCompleted && !t.IsCanceled && !t.IsFaulted;
+            return t.Status == TaskStatus.RanToCompletion;
         }
 
         public static async Task Enqueue<T>(this AsyncQueue<T> queue, T item, CancellationToken ctoken)
@@ -168,6 +169,17 @@ namespace AsyncQueueLib
                 (
                     faulted => { throw faulted.Exception; }
                 )
+            );
+        }
+
+        public static void PostDispose(this CancellationTokenRegistration ctr)
+        {
+            ThreadPool.QueueUserWorkItem
+            (
+                obj =>
+                {
+                    ctr.Dispose();
+                }
             );
         }
     }

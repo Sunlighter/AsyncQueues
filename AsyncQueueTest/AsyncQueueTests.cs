@@ -232,7 +232,9 @@ namespace AsyncQueueTest
             foreach(Item i in items)
             {
                 await Task.Delay(i.delay);
+                //System.Diagnostics.Debug.WriteLine($"Putting: {prefix + i.value}");
                 await dest.Enqueue(prefix + i.value, CancellationToken.None);
+                //System.Diagnostics.Debug.WriteLine($"Done Putting: {prefix + i.value}");
             }
 
             dest.WriteEof();
@@ -249,7 +251,11 @@ namespace AsyncQueueTest
                     .AddIf(!src1eof, 1, Utils.StartableGet(src1, a => a, null))
                     .AddIf(!src2eof, 2, Utils.StartableGet(src2, a => a, null));
 
-                var result = await starters.CompleteAny(CancellationToken.None);
+                Tuple<int, string> result;
+                using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromMinutes(0.5)))
+                {
+                    result = await starters.CompleteAny(cts.Token);
+                }
 
                 if (result.Item2 == null)
                 {
@@ -281,8 +287,8 @@ namespace AsyncQueueTest
         {
             Random r = new Random((int)((System.Diagnostics.Stopwatch.GetTimestamp() >> 3) & 0x7FFFFFFF));
 
-            List<Item> items1 = GenerateItems(r, 100, 0, 6000);
-            List<Item> items2 = GenerateItems(r, 100, 1000, 7000);
+            List<Item> items1 = GenerateItems(r, 300, 0, 12000);
+            List<Item> items2 = GenerateItems(r, 300, 1000, 13000);
 
             AsyncQueue<string> q1 = new AsyncQueue<string>(3);
             AsyncQueue<string> q2 = new AsyncQueue<string>(3);
@@ -298,7 +304,8 @@ namespace AsyncQueueTest
         public void GetAnyTest()
         {
             Task t = Task.Run(new Func<Task>(GetAnyTestAsync));
-            t.Wait();
+            t.Wait(TimeSpan.FromMinutes(1.0));
+            Assert.AreEqual(TaskStatus.RanToCompletion, t.Status);
         }
 
         private async Task CompleteAnyWithCancellationAsync()

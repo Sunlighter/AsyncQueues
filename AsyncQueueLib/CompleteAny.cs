@@ -45,23 +45,40 @@ namespace AsyncQueueLib
             private AsyncQueue<U> queue;
             private U value;
             private Func<U, V> convertResult;
+            private bool done;
 
             public GetCancellableResult(AsyncQueue<U> queue, U value, Func<U, V> convertResult)
             {
                 this.queue = queue;
                 this.value = value;
                 this.convertResult = convertResult;
+                this.done = false;
             }
 
             public override V Complete()
             {
-                queue.ReleaseRead(1);
-                return convertResult(value);
+                if (!done)
+                {
+                    queue.ReleaseRead(1);
+                    return convertResult(value);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Get: Complete or Cancel can be called only once");
+                }
             }
 
             public override void Cancel()
             {
-                queue.ReleaseRead(0);
+                if (!done)
+                {
+                    queue.ReleaseRead(0);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Get: Complete or Cancel can be called only once");
+                }
+                done = true;
             }
         }
 
@@ -69,22 +86,39 @@ namespace AsyncQueueLib
         {
             private AsyncQueue<U> queue;
             private V eofResult;
+            private bool done;
 
             public GetEofCancellableResult(AsyncQueue<U> queue, V eofResult)
             {
                 this.queue = queue;
                 this.eofResult = eofResult;
+                this.done = false;
             }
 
             public override V Complete()
             {
-                queue.ReleaseRead(0);
-                return eofResult;
+                if (!done)
+                {
+                    queue.ReleaseRead(0);
+                    return eofResult;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Get EOF: Complete or Cancel can be called only once");
+                }
             }
 
             public override void Cancel()
             {
-                queue.ReleaseRead(0);
+                if (!done)
+                {
+                    queue.ReleaseRead(0);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Get EOF: Complete or Cancel can be called only once");
+                }
+                done = true;
             }
         }
 
@@ -149,23 +183,40 @@ namespace AsyncQueueLib
             private AsyncQueue<U> queue;
             private U valueToPut;
             private V successfulPut;
+            private bool done;
 
             public PutCancellableResult(AsyncQueue<U> queue, U valueToPut, V successfulPut)
             {
                 this.queue = queue;
                 this.valueToPut = valueToPut;
                 this.successfulPut = successfulPut;
+                done = false;
             }
 
             public override V Complete()
             {
-                queue.ReleaseWrite(valueToPut);
-                return successfulPut;
+                if (!done)
+                {
+                    queue.ReleaseWrite(valueToPut);
+                    return successfulPut;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Put: Complete or Cancel can be called only once");
+                }
             }
 
             public override void Cancel()
             {
-                queue.ReleaseWrite();
+                if (!done)
+                {
+                    queue.ReleaseWrite();
+                }
+                else
+                {
+                    throw new InvalidOperationException("Put: Complete or Cancel can be called only once");
+                }
+                done = true;
             }
         }
 
@@ -250,20 +301,49 @@ namespace AsyncQueueLib
             object syncRoot = new object();
             TaskCompletionSource<Tuple<K, V>> tcs = new TaskCompletionSource<Tuple<K, V>>();
 
-            int waits = 0;
+            ImmutableHashSet<int> waits = ImmutableHashSet<int>.Empty;
             CancellableOperation<V>[] operations = new CancellableOperation<V>[operationStarters.Count];
+            //Task[] continuations = new Task[operationStarters.Count];
             int? firstIndex = null;
             V firstResult = default(V);
 
             CancellationTokenRegistration? ctr = null;
 
+#if false
+            Func<Task> watchdog = async delegate ()
+            {
+                await Task.Delay(TimeSpan.FromMinutes(0.6));
+                if (tcs.Task.Status == TaskStatus.WaitingForActivation)
+                {
+                    bool taken = Monitor.TryEnter(syncRoot, 1);
+                    if (taken) Monitor.Exit(syncRoot);
+
+                    System.Diagnostics.Debug.WriteLine($"syncRoot available: {taken}");
+                    foreach(int i in Enumerable.Range(0, continuations.Length))
+                    {
+                        if (continuations[i] == null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"continuations[{i}] = null");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"continuations[{i}].Status = {continuations[i].Status}");
+                        }
+                    }
+                    System.Diagnostics.Debugger.Break();
+                }
+            };
+
+            Task _dummy = Task.Run(watchdog);
+#endif
+
             Action<CancellationTokenRegistration> setRegistration = delegate (CancellationTokenRegistration value)
             {
                 lock (syncRoot)
                 {
-                    if (firstIndex.HasValue && waits == 0)
+                    if (firstIndex.HasValue && waits.IsEmpty)
                     {
-                        value.Dispose();
+                        value.PostDispose();
                     }
                     else
                     {
@@ -274,7 +354,8 @@ namespace AsyncQueueLib
 
             Action deliverFinalResult = delegate ()
             {
-                #region
+                //System.Diagnostics.Debug.WriteLine($"Begin: deliverFinalResult {(firstIndex.HasValue ? firstIndex.Value.ToString() : "null")}");
+#region
 
                 List<Exception> exc = new List<Exception>();
 
@@ -317,9 +398,9 @@ namespace AsyncQueueLib
                     tcs.PostException(new AggregateException(exc));
                 }
 
-                if (ctr.HasValue) { ctr.Value.Dispose(); }
+                if (ctr.HasValue) { ctr.Value.PostDispose(); }
 
-                #endregion
+#endregion
             };
 
             Action unwind = delegate ()
@@ -328,7 +409,7 @@ namespace AsyncQueueLib
                 while (j > 0)
                 {
                     --j;
-                    if (!firstIndex.HasValue || j != firstIndex.Value)
+                    if ((!firstIndex.HasValue) || j != firstIndex.Value)
                     {
                         if (operations[j] != null)
                         {
@@ -354,11 +435,14 @@ namespace AsyncQueueLib
             {
                 lock(syncRoot)
                 {
-                    --waits;
+                    //System.Diagnostics.Debug.WriteLine($"Begin: handleItemCompletion {i}");
+
+                    System.Diagnostics.Debug.Assert(waits.Contains(i));
+                    waits = waits.Remove(i);
 
                     if (firstIndex.HasValue)
                     {
-                        if (operations[i].Task.IsCompletedNormally())
+                        if (operations[i].Task.Status == TaskStatus.RanToCompletion)
                         {
                             operations[i].Task.Result.Cancel();
                         }
@@ -367,7 +451,7 @@ namespace AsyncQueueLib
                     {
                         firstIndex = i;
 
-                        if (operations[i].Task.IsCompletedNormally())
+                        if (operations[i].Task.Status == TaskStatus.RanToCompletion)
                         {
                             firstResult = operations[i].Task.Result.Complete();
                         }
@@ -375,7 +459,7 @@ namespace AsyncQueueLib
                         unwind();
                     }
 
-                    if (waits == 0)
+                    if (waits.IsEmpty)
                     {
                         deliverFinalResult();
                     }
@@ -404,7 +488,9 @@ namespace AsyncQueueLib
                     }
                     else
                     {
-                        ++waits;
+                        waits = waits.Add(i);
+
+                        //continuations[i] =
                         op.Task.PostContinueWith
                         (
                             taskUnused =>
@@ -412,12 +498,14 @@ namespace AsyncQueueLib
                                 handleItemCompletion(i);
                             }
                         );
+
+                        //System.Diagnostics.Debug.WriteLine($"Continuations[{i}] status: {continuations[i].Status}");
                     }
                 }
 
                 if (shouldUnwind)
                 {
-                    if (waits > 0)
+                    if (!waits.IsEmpty)
                     {
                         unwind();
                     }
