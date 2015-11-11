@@ -22,6 +22,8 @@ cannot inspect the free spaces, but when you release the lock you can provide ze
 
 Because reads and writes work by means of locks, it is possible for multiple threads to contend on the read end or the write
 end of any queue. The lock can be held by only one thread at a time, but grants will occur in the order requested.
+(It is possible for the read lock and the write lock to be held by separate threads at the same time, as long as they
+don't overlap, which means that the queue capacity has to be at least two.)
 
 If this protocol seems too complex, the `Utils` class has extension methods `Enqueue` and `Dequeue` which handle the details
 for you.
