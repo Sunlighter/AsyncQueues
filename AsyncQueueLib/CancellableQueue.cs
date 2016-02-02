@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 
-namespace AsyncQueueLib
+namespace Sunlighter.AsyncQueueLib
 {
     public class CancellableQueue<T>
     {

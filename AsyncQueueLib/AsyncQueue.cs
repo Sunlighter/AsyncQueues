@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsyncQueueLib
+namespace Sunlighter.AsyncQueueLib
 {
     public enum ResultType
     {

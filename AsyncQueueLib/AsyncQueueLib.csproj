@@ -7,8 +7,8 @@
     <ProjectGuid>{81B20C3A-E64A-4F60-8F87-8F67160A63C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AsyncQueueLib</RootNamespace>
-    <AssemblyName>AsyncQueueLib</AssemblyName>
+    <RootNamespace>Sunlighter.AsyncQueueLib</RootNamespace>
+    <AssemblyName>Sunlighter.AsyncQueueLib</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

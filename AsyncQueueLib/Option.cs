@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AsyncQueueLib
+namespace Sunlighter.AsyncQueueLib
 {
     public abstract class Option<T>
     {

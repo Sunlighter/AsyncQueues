@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsyncQueueLib
+namespace Sunlighter.AsyncQueueLib
 {
     public static partial class Utils
     {

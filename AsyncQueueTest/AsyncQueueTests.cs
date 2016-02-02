@@ -1,4 +1,4 @@
-﻿using AsyncQueueLib;
+﻿using Sunlighter.AsyncQueueLib;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AsyncQueueTest
+namespace Sunlighter.AsyncQueueTest
 {
     [TestClass]
     public class AsyncQueueTests
