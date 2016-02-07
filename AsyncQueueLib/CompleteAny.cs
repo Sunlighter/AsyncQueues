@@ -42,12 +42,12 @@ namespace Sunlighter.AsyncQueueLib
     {
         private class GetCancellableResult<U, V> : CancellableResult<V>
         {
-            private AsyncQueue<U> queue;
+            private IQueueSource<U> queue;
             private U value;
             private Func<U, V> convertResult;
             private bool done;
 
-            public GetCancellableResult(AsyncQueue<U> queue, U value, Func<U, V> convertResult)
+            public GetCancellableResult(IQueueSource<U> queue, U value, Func<U, V> convertResult)
             {
                 this.queue = queue;
                 this.value = value;
@@ -84,11 +84,11 @@ namespace Sunlighter.AsyncQueueLib
 
         private class GetEofCancellableResult<U, V> : CancellableResult<V>
         {
-            private AsyncQueue<U> queue;
+            private IQueueSource<U> queue;
             private V eofResult;
             private bool done;
 
-            public GetEofCancellableResult(AsyncQueue<U> queue, V eofResult)
+            public GetEofCancellableResult(IQueueSource<U> queue, V eofResult)
             {
                 this.queue = queue;
                 this.eofResult = eofResult;
@@ -122,7 +122,7 @@ namespace Sunlighter.AsyncQueueLib
             }
         }
 
-        public static CancellableOperationStarter<V> StartableGet<U, V>(this AsyncQueue<U> queue, Func<U, V> convertResult, V eofResult)
+        public static CancellableOperationStarter<V> StartableGet<U, V>(this IQueueSource<U> queue, Func<U, V> convertResult, V eofResult)
         {
             return delegate (CancellationToken ctoken)
             {

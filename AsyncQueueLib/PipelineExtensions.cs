@@ -13,7 +13,7 @@ namespace Sunlighter.AsyncQueueLib
     {
         public static IQueueSource<T> AsQueueSource<T>(this IEnumerable<T> items, int? capacity = null)
         {
-            AsyncQueue<T> queue = new AsyncQueue<T>(capacity);
+            AsyncQueue<T> queue = new AsyncQueue<T>(capacity ?? 2);
 
             Func<Task> feed = async delegate ()
             {
@@ -73,7 +73,7 @@ namespace Sunlighter.AsyncQueueLib
 
         public static IQueueSource<U> Select<T, U>(this IQueueSource<T> queue, Func<T, Task<U>> func, int? capacity = null)
         {
-            AsyncQueue<U> outQueue = new AsyncQueue<U>(capacity);
+            AsyncQueue<U> outQueue = new AsyncQueue<U>(capacity ?? 2);
 
             Func<Task> worker = async delegate ()
             {
@@ -94,7 +94,7 @@ namespace Sunlighter.AsyncQueueLib
 
         public static IQueueSource<T> Where<T>(this IQueueSource<T> queue, Func<T, Task<bool>> predicate, int? capacity = null)
         {
-            AsyncQueue<T> outQueue = new AsyncQueue<T>(capacity);
+            AsyncQueue<T> outQueue = new AsyncQueue<T>(capacity ?? 2);
 
             Func<Task> worker = async delegate ()
             {
@@ -117,7 +117,7 @@ namespace Sunlighter.AsyncQueueLib
 
         public static IQueueSource<U> ParallelSelect<T, U>(this IQueueSource<T> queue, ParallelWorker parallelWorker, Func<T, Task<U>> func, int? capacity = null)
         {
-            AsyncQueue<U> outQueue = new AsyncQueue<U>(capacity);
+            AsyncQueue<U> outQueue = new AsyncQueue<U>(capacity ?? 2);
 
             IdleDetector idleDetector = new IdleDetector();
 
@@ -161,7 +161,7 @@ namespace Sunlighter.AsyncQueueLib
 
         public static IQueueSource<T> ParallelWhere<T>(this IQueueSource<T> queue, ParallelWorker parallelWorker, Func<T, Task<bool>> predicate, int? capacity = null)
         {
-            AsyncQueue<T> outQueue = new AsyncQueue<T>(capacity);
+            AsyncQueue<T> outQueue = new AsyncQueue<T>(capacity ?? 2);
 
             IdleDetector idleDetector = new IdleDetector();
 
@@ -287,7 +287,7 @@ namespace Sunlighter.AsyncQueueLib
 
         public static IQueueSource<T> Reorder<T>(this IQueueSource<T> queue, Func<T, int> getOrder, int first, int? capacity = null)
         {
-            AsyncQueue<T> outQueue = new AsyncQueue<T>(capacity);
+            AsyncQueue<T> outQueue = new AsyncQueue<T>(capacity ?? 2);
 
             Func<Task> worker = async delegate ()
             {
