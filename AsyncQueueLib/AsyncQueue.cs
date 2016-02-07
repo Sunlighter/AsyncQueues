@@ -199,7 +199,13 @@ namespace Sunlighter.AsyncQueueLib
         }
     }
 
-    public class AsyncQueue<T>
+    public interface IQueueSource<T>
+    {
+        Task<AcquireReadResult> AcquireReadAsync(int desiredItems, CancellationToken ctoken);
+        void ReleaseRead(int consumedItems);
+    }
+
+    public class AsyncQueue<T> : IQueueSource<T>
     {
         private object syncRoot;
         private int? capacity;
@@ -312,14 +318,7 @@ namespace Sunlighter.AsyncQueueLib
                         long id = waitingReads.Enqueue(wr);
                         wr.id = id;
 
-                        ThreadPool.QueueUserWorkItem
-                        (
-                            s0 =>
-                            {
-                                CancellationTokenRegistration ctr = ctoken.Register(() => CancelAcquireRead(id));
-                                SetRegistrationForAcquireRead(id, ctr);
-                            }
-                        );
+                        Utils.PostRegistration(ctoken, ctr => SetRegistrationForAcquireRead(id, ctr), () => CancelAcquireRead(id));
 
                         return k.Task;
                     }
@@ -402,14 +401,7 @@ namespace Sunlighter.AsyncQueueLib
                         long id = waitingWrites.Enqueue(ww);
                         ww.id = id;
 
-                        ThreadPool.QueueUserWorkItem
-                        (
-                            s0 =>
-                            {
-                                CancellationTokenRegistration ctr = ctoken.Register(() => CancelAcquireWrite(id));
-                                SetRegistrationForAcquireWrite(id, ctr);
-                            }
-                        );
+                        Utils.PostRegistration(ctoken, ctr => SetRegistrationForAcquireWrite(id, ctr), () => CancelAcquireWrite(id));
 
                         return k.Task;
                     }

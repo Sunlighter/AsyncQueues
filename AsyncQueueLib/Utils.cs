@@ -123,7 +123,7 @@ namespace Sunlighter.AsyncQueueLib
             );
         }
 
-        public static async Task<Option<T>> Dequeue<T>(this AsyncQueue<T> queue, CancellationToken ctoken)
+        public static async Task<Option<T>> Dequeue<T>(this IQueueSource<T> queue, CancellationToken ctoken)
         {
             AcquireReadResult result = await queue.AcquireReadAsync(1, ctoken);
 
