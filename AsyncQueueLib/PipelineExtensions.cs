@@ -327,8 +327,6 @@ namespace Sunlighter.AsyncQueueLib
             Func<Tuple<int, T>, Task<Tuple<int, U>>> func2 = async pair => new Tuple<int, U>(pair.Item1, await func(pair.Item2));
 
             return queue.Indexed().ParallelSelect(parallelWorker, func2, capacity).Reorder(pair => pair.Item1, 0, capacity).SynchronousSelect(pair => pair.Item2);
-
-            
         }
 
         public static IQueueSource<T> OrderedParallelWhere<T>(this IQueueSource<T> queue, ParallelWorker parallelWorker, Func<T, Task<bool>> predicate, int? capacity = null)

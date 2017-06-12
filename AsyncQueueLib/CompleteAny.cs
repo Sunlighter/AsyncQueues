@@ -180,12 +180,12 @@ namespace Sunlighter.AsyncQueueLib
 
         private class PutCancellableResult<U, V> : CancellableResult<V>
         {
-            private AsyncQueue<U> queue;
+            private IQueueSink<U> queue;
             private U valueToPut;
             private V successfulPut;
             private bool done;
 
-            public PutCancellableResult(AsyncQueue<U> queue, U valueToPut, V successfulPut)
+            public PutCancellableResult(IQueueSink<U> queue, U valueToPut, V successfulPut)
             {
                 this.queue = queue;
                 this.valueToPut = valueToPut;
@@ -220,7 +220,7 @@ namespace Sunlighter.AsyncQueueLib
             }
         }
 
-        public static CancellableOperationStarter<V> StartablePut<U, V>(this AsyncQueue<U> queue, U valueToPut, V successfulPut)
+        public static CancellableOperationStarter<V> StartablePut<U, V>(this IQueueSink<U> queue, U valueToPut, V successfulPut)
         {
             return delegate (CancellationToken ctoken)
             {

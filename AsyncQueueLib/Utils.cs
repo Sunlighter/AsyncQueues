@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -81,7 +82,17 @@ namespace Sunlighter.AsyncQueueLib
             return t.Status == TaskStatus.RanToCompletion;
         }
 
-        public static async Task Enqueue<T>(this AsyncQueue<T> queue, T item, CancellationToken ctoken)
+        public static void ReleaseWrite<T>(this IQueueSink<T> queue)
+        {
+            queue.ReleaseWrite(ImmutableList<T>.Empty);
+        }
+
+        public static void ReleaseWrite<T>(this IQueueSink<T> queue, T producedItem)
+        {
+            queue.ReleaseWrite(ImmutableList<T>.Empty.Add(producedItem));
+        }
+
+        public static async Task Enqueue<T>(this IQueueSink<T> queue, T item, CancellationToken ctoken)
         {
             AcquireWriteResult result = await queue.AcquireWriteAsync(1, ctoken);
 

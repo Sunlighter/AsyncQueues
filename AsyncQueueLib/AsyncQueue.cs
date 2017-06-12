@@ -205,7 +205,14 @@ namespace Sunlighter.AsyncQueueLib
         void ReleaseRead(int consumedItems);
     }
 
-    public class AsyncQueue<T> : IQueueSource<T>
+    public interface IQueueSink<T>
+    {
+        Task<AcquireWriteResult> AcquireWriteAsync(int desiredSpace, CancellationToken ctoken);
+        void ReleaseWrite(ImmutableList<T> producedItems);
+        void WriteEof();
+    }
+
+    public class AsyncQueue<T> : IQueueSource<T>, IQueueSink<T>
     {
         private object syncRoot;
         private int? capacity;
@@ -515,16 +522,6 @@ namespace Sunlighter.AsyncQueueLib
                     CheckWaitingWrites();
                 }
             }
-        }
-
-        public void ReleaseWrite()
-        {
-            ReleaseWrite(ImmutableList<T>.Empty);
-        }
-
-        public void ReleaseWrite(T producedItem)
-        {
-            ReleaseWrite(ImmutableList<T>.Empty.Add(producedItem));
         }
 
         public void WriteEof()
