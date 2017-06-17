@@ -105,6 +105,31 @@ a chain of multiple ``ParallelSelect`` calls followed by one big reordering at t
 ``OrderedParallel``, it may not achieve the results you want. The ``Parallel`` will rearrange the items, and then the
 ``OrderedParallel`` will carefully preserve that rearrangement.)
 
+## For Each
+
+It is very common to want to create a task that processes each item in a queue. To make that easier, a new
+``WorkerTask`` class is provided, with four ``ForEach`` functions.
+
+* One which processes a single queue serially
+* One which processes multiple queues serially
+* One which processes a single queue with a ``ParallelWorker``
+* One which processes multiple queues with a ``ParallelWorker``
+
+These return a ``Func<Task>`` which can be passed to ``Task.Run``.
+
+These require the use of an ``ExceptionCollector``. The ``ExceptionCollector`` keeps a ``CancellationTokenSource`` and cancels it
+when any exception is added. The ``ForEach`` functions catch exceptions and automatically add them to the ``ExceptionCollector``
+provided as an argument. They also stop iteration if the ``ExceptionCollector.CancellationToken`` becomes canceled.
+
+All four of these functions pass a ``ForEachInfo<T>`` item to the "body" function you provide. The ``Item`` property of this object
+contains the item that was retrieved. For multiple queues, the ``InputIndex`` property indicates which queue the item came from. For
+parallel processing, the ``WorkerId`` property returns the index of the current worker, and is guaranteed not to be used by any other
+parallel worker at the same time. Finally, the ``CancellationToken`` property contains a cancellation token which comes from the
+``ExceptionCollector``.
+
+All four of these functions also accept an ``onClose`` function, which can be ``null``. This function is always called when provided,
+and is a great place to call ``WriteEof`` from.
+
 ## Tests
  
 If you would like to see examples of how this code is used, please look at the tests.
