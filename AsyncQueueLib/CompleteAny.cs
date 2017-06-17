@@ -302,6 +302,7 @@ namespace Sunlighter.AsyncQueueLib
             TaskCompletionSource<Tuple<K, V>> tcs = new TaskCompletionSource<Tuple<K, V>>();
 
             ImmutableHashSet<int> waits = ImmutableHashSet<int>.Empty;
+            ImmutableHashSet<int> canceled = ImmutableHashSet<int>.Empty;
             CancellableOperation<V>[] operations = new CancellableOperation<V>[operationStarters.Count];
             int? firstIndex = null;
             V firstResult = default(V);
@@ -338,9 +339,16 @@ namespace Sunlighter.AsyncQueueLib
                     if (operations[i].Task.IsFaulted)
                     {
                         Exception eTask = operations[i].Task.Exception;
-                        if (!(eTask is OperationCanceledException))
+                        if (!(eTask is OperationCanceledException) || !(canceled.Contains(i)))
                         {
                             exc.Add(eTask);
+                        }
+                    }
+                    else if (operations[i].Task.IsCanceled)
+                    {
+                        if (!canceled.Contains(i))
+                        {
+                            exc.Add(new OperationCanceledException());
                         }
                     }
                 }
@@ -384,6 +392,7 @@ namespace Sunlighter.AsyncQueueLib
                         if (operations[j] != null)
                         {
                             operations[j].Cancel();
+                            canceled = canceled.Add(j);
                         }
                     }
                 }
@@ -413,6 +422,7 @@ namespace Sunlighter.AsyncQueueLib
                         if (operations[i].Task.Status == TaskStatus.RanToCompletion)
                         {
                             operations[i].Task.Result.Cancel();
+                            canceled = canceled.Add(i);
                         }
                     }
                     else
