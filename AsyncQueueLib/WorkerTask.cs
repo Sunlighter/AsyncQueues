@@ -10,24 +10,23 @@ namespace Sunlighter.AsyncQueueLib
 {
     public static class WorkerTask
     {
-        public static Func<Task> ForEach<T>(IQueueSource<T> source, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, CancellationToken ctoken)
+        public static Func<Task> ForEach<T>(IQueueSource<T> source, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
         {
             Func<Task> t = async delegate ()
             {
-                ExceptionAggregator ea = new ExceptionAggregator();
                 try
                 {
                     while (true)
                     {
-                        var item = await source.Dequeue(ctoken);
+                        var item = await source.Dequeue(ec.CancellationToken);
                         if (!item.HasValue) break;
                         try
                         {
-                            await processAsync(new ForEachInfo<T>(item.Value, 0, 0, ctoken));
+                            await processAsync(new ForEachInfo<T>(item.Value, 0, 0, ec.CancellationToken));
                         }
                         catch(Exception exc)
                         {
-                            ea.Add(exc);
+                            ec.Add(exc);
                             break;
                         }
                     }
@@ -42,18 +41,16 @@ namespace Sunlighter.AsyncQueueLib
                         }
                         catch(Exception exc)
                         {
-                            ea.Add(exc);
+                            ec.Add(exc);
                         }
                     }
                 }
-
-                ea.ThrowAll();
             };
 
             return t;
         }
 
-        public static Func<Task> ForEach<T, U>(IQueueSource<T>[] sources, InputPriorities inputPriorities, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, CancellationToken ctoken)
+        public static Func<Task> ForEach<T, U>(IQueueSource<T>[] sources, InputPriorities inputPriorities, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
         {
             Func<Task> t = async delegate ()
             {
@@ -71,11 +68,18 @@ namespace Sunlighter.AsyncQueueLib
                             j => { ops = ops.AddIf(!atEof[j], j, Utils.StartableGet<T, Option<T>>(sources[j], a => new Some<T>(a), new None<T>())); }
                         );
 
-                        Tuple<int, Option<T>> result = await ops.CompleteAny(ctoken);
+                        Tuple<int, Option<T>> result = await ops.CompleteAny(ec.CancellationToken);
 
                         if (result.Item2.HasValue)
                         {
-                            await processAsync(new ForEachInfo<T>(result.Item2.Value, result.Item1, 0, ctoken));
+                            try
+                            {
+                                await processAsync(new ForEachInfo<T>(result.Item2.Value, result.Item1, 0, ec.CancellationToken));
+                            }
+                            catch(Exception exc)
+                            {
+                                ec.Add(exc);
+                            }
                         }
                         else
                         {
@@ -87,7 +91,14 @@ namespace Sunlighter.AsyncQueueLib
                 {
                     if (onCloseAsync != null)
                     {
-                        await onCloseAsync();
+                        try
+                        {
+                            await onCloseAsync();
+                        }
+                        catch(Exception exc)
+                        {
+                            ec.Add(exc);
+                        }
                     }
                 }
             };
@@ -95,20 +106,16 @@ namespace Sunlighter.AsyncQueueLib
             return t;
         }
 
-        public static Func<Task> ParallelForEach<T>(IQueueSource<T> source, ParallelWorker parallelWorker, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, CancellationToken ctoken)
+        public static Func<Task> ParallelForEach<T>(IQueueSource<T> source, ParallelWorker parallelWorker, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
         {
             Func<Task> t = async delegate ()
             {
-                object syncRootExceptions = new object();
-                List<Exception> exceptions = new List<Exception>();
-                CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ctoken);
-                CancellationToken ctokenInternal = cts.Token;
                 IdleDetector idleDetector = new IdleDetector();
                 try
                 {
                     while (true)
                     {
-                        var item = await source.Dequeue(ctokenInternal);
+                        var item = await source.Dequeue(ec.CancellationToken);
                         if (!item.HasValue) break;
                         T itemValue = item.Value;
 
@@ -120,22 +127,18 @@ namespace Sunlighter.AsyncQueueLib
                             {
                                 try
                                 {
-                                    await processAsync(new ForEachInfo<T>(itemValue, 0, workerId, ctokenInternal));
+                                    await processAsync(new ForEachInfo<T>(itemValue, 0, workerId, ec.CancellationToken));
                                 }
                                 catch(Exception exc)
                                 {
-                                    lock(syncRootExceptions)
-                                    {
-                                        exceptions.Add(exc);
-                                    }
-                                    cts.Cancel();
+                                    ec.Add(exc);
                                 }
                                 finally
                                 {
                                     idleDetector.Leave();
                                 }
                             },
-                            ctokenInternal
+                            ec.CancellationToken
                         );
                     }
                 }
@@ -150,31 +153,19 @@ namespace Sunlighter.AsyncQueueLib
                         }
                         catch(Exception exc)
                         {
-                            exceptions.Add(exc);
+                            ec.Add(exc);
                         }
                     }
-                }
-                if (exceptions.Count == 1)
-                {
-                    throw exceptions[0];
-                }
-                else if (exceptions.Count > 1)
-                {
-                    throw new AggregateException(exceptions);
                 }
             };
 
             return t;
         }
 
-        public static Func<Task> ParallelForEach<T, U>(IQueueSource<T>[] sources, InputPriorities inputPriorities, ParallelWorker parallelWorker, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, CancellationToken ctoken)
+        public static Func<Task> ParallelForEach<T, U>(IQueueSource<T>[] sources, InputPriorities inputPriorities, ParallelWorker parallelWorker, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
         {
             Func<Task> t = async delegate ()
             {
-                object syncRootExceptions = new object();
-                List<Exception> exceptions = new List<Exception>();
-                CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(ctoken);
-                CancellationToken ctokenInternal = cts.Token;
                 IdleDetector idleDetector = new IdleDetector();
                 try
                 {
@@ -190,7 +181,7 @@ namespace Sunlighter.AsyncQueueLib
                             j => { ops = ops.AddIf(!atEof[j], j, Utils.StartableGet<T, Option<T>>(sources[j], a => new Some<T>(a), new None<T>())); }
                         );
 
-                        Tuple<int, Option<T>> result = await ops.CompleteAny(ctoken);
+                        Tuple<int, Option<T>> result = await ops.CompleteAny(ec.CancellationToken);
 
                         if (result.Item2.HasValue)
                         {
@@ -205,21 +196,18 @@ namespace Sunlighter.AsyncQueueLib
                                 {
                                     try
                                     {
-                                        await processAsync(new ForEachInfo<T>(itemValue, sourceIndex, workerId, ctokenInternal));
+                                        await processAsync(new ForEachInfo<T>(itemValue, sourceIndex, workerId, ec.CancellationToken));
                                     }
                                     catch(Exception exc)
                                     {
-                                        lock(syncRootExceptions)
-                                        {
-                                            exceptions.Add(exc);
-                                        }
+                                        ec.Add(exc);
                                     }
                                     finally
                                     {
                                         idleDetector.Leave();
                                     }
                                 },
-                                ctoken
+                                ec.CancellationToken
                             );
                         }
                         else
@@ -238,17 +226,9 @@ namespace Sunlighter.AsyncQueueLib
                         }
                         catch(Exception exc)
                         {
-                            exceptions.Add(exc);
+                            ec.Add(exc);
                         }
                     }
-                }
-                if (exceptions.Count == 1)
-                {
-                    throw exceptions[0];
-                }
-                else if (exceptions.Count > 1)
-                {
-                    throw new AggregateException(exceptions);
                 }
             };
 
@@ -319,15 +299,24 @@ namespace Sunlighter.AsyncQueueLib
         }
     }
 
-    public class ExceptionAggregator
+    public class ExceptionCollector
     {
         private object syncRoot;
         private ImmutableList<Exception> exceptions;
+        private CancellationTokenSource cts;
 
-        public ExceptionAggregator()
+        public ExceptionCollector()
         {
             syncRoot = new object();
             exceptions = ImmutableList<Exception>.Empty;
+            cts = new CancellationTokenSource();
+        }
+
+        public ExceptionCollector(params CancellationToken[] tokens)
+        {
+            syncRoot = new object();
+            exceptions = ImmutableList<Exception>.Empty;
+            cts = CancellationTokenSource.CreateLinkedTokenSource(tokens);
         }
 
         private void AddInternal(Exception exc)
@@ -349,9 +338,14 @@ namespace Sunlighter.AsyncQueueLib
         {
             lock (syncRoot)
             {
+                cts.Cancel();
                 AddInternal(exc);
             }
         }
+
+        public ImmutableList<Exception> Exceptions => exceptions;
+
+        public CancellationToken CancellationToken => cts.Token;
 
         public void ThrowAll()
         {
@@ -370,6 +364,19 @@ namespace Sunlighter.AsyncQueueLib
                     // do nothing
                 }
             }
+        }
+
+        public void WaitAll(params Task[] tasks)
+        {
+            try
+            {
+                Task.WaitAll(tasks);
+            }
+            catch(Exception exc)
+            {
+                Add(exc);
+            }
+            ThrowAll();
         }
     }
 }

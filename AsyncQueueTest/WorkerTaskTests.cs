@@ -17,6 +17,8 @@ namespace Sunlighter.AsyncQueueTest
         {
             Random r = new Random((int)((System.Diagnostics.Stopwatch.GetTimestamp() >> 3) & 0x7FFFFFFF));
 
+            ExceptionCollector ec = new ExceptionCollector();
+
             AsyncQueue<int> q1 = new AsyncQueue<int>(5);
 
             Func<Task> t1 = async delegate ()
@@ -42,7 +44,7 @@ namespace Sunlighter.AsyncQueueTest
                     q2.WriteEof();
                     return Task.CompletedTask;
                 },
-                CancellationToken.None
+                ec
             );
 
             List<int> items = new List<int>();
@@ -59,7 +61,7 @@ namespace Sunlighter.AsyncQueueTest
                 {
                     return Task.CompletedTask;
                 },
-                CancellationToken.None
+                ec
             );
 
             Task T1 = Task.Run(t1);
@@ -68,6 +70,7 @@ namespace Sunlighter.AsyncQueueTest
 
             Task.WaitAll(T1, T2, T3);
 
+            Assert.AreEqual(0, ec.Exceptions.Count);
             Assert.AreEqual(100, items.Count);
         }
 
@@ -76,8 +79,7 @@ namespace Sunlighter.AsyncQueueTest
         {
             Random r = new Random((int)((System.Diagnostics.Stopwatch.GetTimestamp() >> 3) & 0x7FFFFFFF));
 
-            CancellationTokenSource cts = new CancellationTokenSource();
-            CancellationToken ctoken = cts.Token;
+            ExceptionCollector ec = new ExceptionCollector();
 
             AsyncQueue<int> q1 = new AsyncQueue<int>(5);
 
@@ -85,7 +87,7 @@ namespace Sunlighter.AsyncQueueTest
             {
                 for (int i = 0; i < 100; ++i)
                 {
-                    await q1.Enqueue(r.Next(1000), ctoken);
+                    await q1.Enqueue(r.Next(1000), ec.CancellationToken);
                 }
                 q1.WriteEof();
             };
@@ -97,8 +99,7 @@ namespace Sunlighter.AsyncQueueTest
                 q1,
                 async delegate (ForEachInfo<int> fi)
                 {
-                    await q2.Enqueue(fi.Item * 100, ctoken);
-                    cts.Cancel();
+                    await q2.Enqueue(fi.Item * 100, fi.CancellationToken);
                     throw new InvalidOperationException("test 1");
                 },
                 delegate ()
@@ -106,7 +107,7 @@ namespace Sunlighter.AsyncQueueTest
                     q2.WriteEof();
                     return Task.FromException(new InvalidOperationException("test 2"));
                 },
-                ctoken
+                ec
             );
 
             List<int> items = new List<int>();
@@ -123,7 +124,7 @@ namespace Sunlighter.AsyncQueueTest
                 {
                     return Task.CompletedTask;
                 },
-                ctoken
+                ec
             );
 
             Task T1 = Task.Run(t1);
@@ -133,12 +134,12 @@ namespace Sunlighter.AsyncQueueTest
             bool threwException = false;
             try
             {
-                Task.WaitAll(T1, T2, T3);
+                ec.WaitAll(T1, T2, T3);
             }
             catch(Exception exc)
             {
+                System.Diagnostics.Debug.WriteLine(exc);
                 threwException = true;
-                Assert.IsInstanceOfType(exc, typeof(AggregateException));
             }
 
             Assert.IsTrue(threwException);
