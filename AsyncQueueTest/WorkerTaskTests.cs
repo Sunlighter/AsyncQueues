@@ -144,5 +144,78 @@ namespace Sunlighter.AsyncQueueTest
 
             Assert.IsTrue(threwException);
         }
+
+        [TestMethod]
+        public void MultiSourceForEachTest()
+        {
+            ExceptionCollector ec = new ExceptionCollector();
+
+            AsyncQueue<int> q1 = new AsyncQueue<int>(5);
+
+            Func<Task> t1 = async delegate ()
+            {
+                for (int i = 0; i < 100; ++i)
+                {
+                    await q1.Enqueue(i, ec.CancellationToken);
+                }
+                q1.WriteEof();
+            };
+
+            AsyncQueue<int> q2 = new AsyncQueue<int>(5);
+
+            Func<Task> t2 = async delegate ()
+            {
+                for (int i = 100; i < 200; ++i)
+                {
+                    await q2.Enqueue(i, ec.CancellationToken);
+                }
+                q2.WriteEof();
+            };
+
+            AsyncQueue<int> q3 = new AsyncQueue<int>(5);
+
+            Func<Task> t3 = WorkerTask.ForEach
+            (
+                new IQueueSource<int>[] { q1, q2 },
+                InputPriorities.RoundRobin,
+                async fei =>
+                {
+                    if (fei.Item == 133) throw new InvalidOperationException("test");
+                    await q3.Enqueue(fei.Item, fei.CancellationToken);
+                },
+                () =>
+                {
+                    q3.WriteEof();
+                    return Task.CompletedTask;
+                },
+                ec
+            );
+
+            Func<Task> t4 = WorkerTask.ForEach
+            (
+                q3,
+                fei =>
+                {
+                    System.Diagnostics.Debug.WriteLine(fei.Item);
+                    return Task.CompletedTask;
+                },
+                null,
+                ec
+            );
+
+            Task T1 = Task.Run(t1);
+            Task T2 = Task.Run(t2);
+            Task T3 = Task.Run(t3);
+            Task T4 = Task.Run(t4);
+
+            try
+            {
+                ec.WaitAll(T1, T2, T3, T4);
+            }
+            catch(Exception exc)
+            {
+                System.Diagnostics.Debug.WriteLine(exc);
+            }
+        }
     }
 }

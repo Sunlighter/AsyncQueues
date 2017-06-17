@@ -50,7 +50,7 @@ namespace Sunlighter.AsyncQueueLib
             return t;
         }
 
-        public static Func<Task> ForEach<T, U>(IQueueSource<T>[] sources, InputPriorities inputPriorities, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
+        public static Func<Task> ForEach<T>(IQueueSource<T>[] sources, InputPriorities inputPriorities, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
         {
             Func<Task> t = async delegate ()
             {
@@ -162,7 +162,7 @@ namespace Sunlighter.AsyncQueueLib
             return t;
         }
 
-        public static Func<Task> ParallelForEach<T, U>(IQueueSource<T>[] sources, InputPriorities inputPriorities, ParallelWorker parallelWorker, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
+        public static Func<Task> ParallelForEach<T>(IQueueSource<T>[] sources, InputPriorities inputPriorities, ParallelWorker parallelWorker, Func<ForEachInfo<T>, Task> processAsync, Func<Task> onCloseAsync, ExceptionCollector ec)
         {
             Func<Task> t = async delegate ()
             {
