@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Sunlighter.AsyncQueueLib;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace AsyncQueueTest
+namespace Sunlighter.AsyncQueueTest
 {
     [TestClass]
     public class PipelineTests

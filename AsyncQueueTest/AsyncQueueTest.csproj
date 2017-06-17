@@ -60,6 +60,7 @@
     <Compile Include="AsyncQueueTests.cs" />
     <Compile Include="PipelineTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WorkerTaskTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsyncQueueLib\AsyncQueueLib.csproj">
