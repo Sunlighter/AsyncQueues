@@ -9,6 +9,8 @@
     <PackageLicenseUrl>https://github.com/Sunlighter/AsyncQueues/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/Sunlighter/AsyncQueues</PackageProjectUrl>
     <PackageTags>queuing</PackageTags>
+    <Description>Asynchronous Queuing Library</Description>
+    <PackageId>Sunlighter.AsyncQueueLib</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
