@@ -141,3 +141,12 @@ Some of this code was written under .NET 4.5.2, so new flags introduced in .NET 
 still not be used, because it makes the decision (to run continuations asynchronously) in the wrong place. This decision
 should not be made at the time the ``TaskCompletionSource`` is created, but at the time ``SetResult`` is called. Therefore,
 the ``PostResult`` extension methods have been kept.
+
+## A Personal Note
+
+My résumé includes a reference to a Queue Service I wrote for an employer. This is **not** that service. I don't even
+have a copy of the service I wrote for that employer. It was a Windows Service that had an interface over WCF. It was
+written to work in dot-Net 3.5 and 4.0. Internally, it used a ``CancellableOperation`` abstraction instead of the
+locking used by this library. Over WCF, though, it was not possible to cancel anything. Instead, you could specify
+timeouts, and you would receive a special result if the operation timed out. So it basically did long-polling over
+WCF. This library uses more recent versions of .NET and does not use WCF at all. It is a library and not a service.
