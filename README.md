@@ -142,6 +142,10 @@ still not be used, because it makes the decision (to run continuations asynchron
 should not be made at the time the ``TaskCompletionSource`` is created, but at the time ``SetResult`` is called. Therefore,
 the ``PostResult`` extension methods have been kept.
 
+## NuGet
+
+A compiled version of this code is available on NuGet as **Sunlighter.AsyncQueueLib**.
+
 ## A Personal Note
 
 My résumé includes a reference to a Queue Service I wrote for an employer. This is **not** that service. I don't even
