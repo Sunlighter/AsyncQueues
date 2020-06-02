@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Immutable;
 
 namespace Sunlighter.AsyncQueueTest
 {
@@ -392,6 +393,62 @@ namespace Sunlighter.AsyncQueueTest
         {
             Task t = Task.Run(new Func<Task>(CompleteAnyWithCancellationAsync));
             t.Wait();
+        }
+
+        [TestMethod]
+        public async Task ReceiveContentionTest()
+        {
+            CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10.0));
+            //CancellationTokenSource cts = new CancellationTokenSource();
+
+            ImmutableList<Func<Task>> tasks = ImmutableList<Func<Task>>.Empty;
+
+            AsyncQueue<int> q = new AsyncQueue<int>(8);
+
+            int readerCount = 3;
+
+            //SemaphoreSlim ss = new SemaphoreSlim(0, readerCount);
+
+            foreach(int i in Enumerable.Range(0, readerCount))
+            {
+                Func<Task> reader = async delegate ()
+                {
+                    try
+                    {
+                        while(true)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Reader {i} waiting for value");
+                            Option<int> oi = await q.Dequeue(cts.Token);
+                            if (!oi.HasValue) break;
+                            System.Diagnostics.Debug.WriteLine($"Reader {i} received {oi.Value}");
+                        }
+                    }
+                    finally
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Reader {i} exited");
+                        //ss.Release();
+                    }
+                };
+
+                tasks = tasks.Add(reader);
+            }
+
+            ImmutableList<Task> runningTasks = tasks.Select(t => Task.Run(t)).ToImmutableList();
+
+            await q.Enqueue(100, cts.Token);
+
+            q.WriteEof();
+
+            //for(int i = 0; i < readerCount; ++i)
+            //{
+            //    await ss.WaitAsync();
+            //}
+
+            await Task.WhenAll(runningTasks);
+
+            System.Diagnostics.Debug.WriteLine("Done");
+
+            Assert.IsFalse(cts.IsCancellationRequested);
         }
     }
 }

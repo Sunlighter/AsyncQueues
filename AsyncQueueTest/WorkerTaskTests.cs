@@ -220,6 +220,111 @@ namespace Sunlighter.AsyncQueueTest
         }
 
         [TestMethod]
+        public void ParallelForEachTest2()
+        {
+            object rSyncRoot = new object();
+            Random r = new Random((int)((System.Diagnostics.Stopwatch.GetTimestamp() >> 3) & 0x7FFFFFFF));
+
+            ExceptionCollector ec = new ExceptionCollector();
+
+            AsyncQueue<int> q1 = new AsyncQueue<int>(5);
+
+            Func<Task> t1 = async delegate ()
+            {
+                for (int i = 0; i < 100; ++i)
+                {
+                    await q1.Enqueue(r.Next(10000), ec.CancellationToken);
+                }
+                q1.WriteEof();
+            };
+
+            AsyncQueue<int> q2 = new AsyncQueue<int>(5);
+
+            ParallelWorker pw = new ParallelWorker(8);
+
+            Func<Task> t2 = WorkerTask.ParallelForEach
+            (
+                q1,
+                pw,
+                async delegate (ForEachInfo<int> fi)
+                {
+                    System.Diagnostics.Debug.WriteLine($"task 2 received: {fi.Item}");
+                    await q2.Enqueue(fi.Item * 100, fi.CancellationToken);
+
+                    int time;
+                    lock (rSyncRoot)
+                    {
+                        time = 100 + r.Next(800);
+                    }
+                    await Task.Delay(time);
+                },
+                delegate ()
+                {
+                    q2.WriteEof();
+                    return Task.CompletedTask;
+                },
+                ec
+            );
+
+            ParallelWorker pw2 = new ParallelWorker(3);
+
+            AsyncQueue<int> q2a = new AsyncQueue<int>(5);
+
+            Func<Task> t2a = WorkerTask.ParallelForEach
+            (
+                q2,
+                pw2,
+                async delegate (ForEachInfo<int> fi)
+                {
+                    System.Diagnostics.Debug.WriteLine($"task 2a received: {fi.Item}");
+                    await q2a.Enqueue(fi.Item * 100, fi.CancellationToken);
+
+                    int time;
+                    lock (rSyncRoot)
+                    {
+                        time = 400 + r.Next(1200);
+                    }
+                    await Task.Delay(time);
+                },
+                delegate ()
+                {
+                    q2a.WriteEof();
+                    return Task.CompletedTask;
+                },
+                ec
+            );
+
+            List<int> items = new List<int>();
+
+            Func<Task> t3 = WorkerTask.ForEach
+            (
+                q2a,
+                delegate (ForEachInfo<int> fi)
+                {
+                    System.Diagnostics.Debug.WriteLine($"task 3 received: {fi.Item}");
+                    items.Add(fi.Item);
+                    System.Diagnostics.Debug.WriteLine(fi.Item);
+                    return Task.CompletedTask;
+                },
+                delegate ()
+                {
+                    return Task.CompletedTask;
+                },
+                ec
+            );
+
+            Task T1 = Task.Run(t1);
+            Task T2 = Task.Run(t2);
+            Task T2A = Task.Run(t2a);
+            Task T3 = Task.Run(t3);
+
+            Task.WaitAll(T1, T2, T2A, T3);
+
+            Assert.AreEqual(0, ec.Exceptions.Count);
+            Assert.AreEqual(100, items.Count);
+        }
+
+        [TestMethod]
         public void ParallelForEachExceptionTest()
         {
             ExceptionCollector ec = new ExceptionCollector();

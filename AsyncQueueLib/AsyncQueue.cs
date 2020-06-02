@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -450,24 +451,10 @@ namespace Sunlighter.AsyncQueueLib
                     waitingReads.Dequeue();
 
                     readLocked = Math.Min(wr.desiredItems, items.Count);
-                    
                     wr.k.PostResult(new AcquireReadSucceeded<T>(readPtr, readLocked.Value == 0 ? ImmutableList<T>.Empty : items.GetRange(0, readLocked.Value)));
                     if (wr.ctr.HasValue)
                     {
                         wr.ctr.Value.PostDispose();
-                    }
-
-                    if (readLocked.Value == 0)
-                    {
-                        while(waitingReads.Count > 0)
-                        {
-                            WaitingRead wr2 = waitingReads.Dequeue();
-                            wr2.k.PostResult(new AcquireReadSucceeded<T>(readPtr, ImmutableList<T>.Empty));
-                            if (wr2.ctr.HasValue)
-                            {
-                                wr2.ctr.Value.PostDispose();
-                            }
-                        }
                     }
                 }
             }

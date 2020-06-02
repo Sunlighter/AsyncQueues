@@ -146,6 +146,7 @@ namespace Sunlighter.AsyncQueueLib
                     {
                         if (succeeded.ItemCount == 0)
                         {
+                            queue.ReleaseRead(0);
                             return new None<T>();
                         }
                         else
