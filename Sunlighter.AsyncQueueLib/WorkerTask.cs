@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sunlighter.OptionLib;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -65,7 +66,7 @@ namespace Sunlighter.AsyncQueueLib
 
                         loop.ForEach
                         (
-                            j => { ops = ops.AddIf(!atEof[j], j, Utils.StartableGet<T, Option<T>>(sources[j], a => new Some<T>(a), new None<T>())); }
+                            j => { ops = ops.AddIf(!atEof[j], j, Utils.StartableGet<T, Option<T>>(sources[j], a => Option<T>.Some(a), Option<T>.None)); }
                         );
 
                         Tuple<int, Option<T>> result = await ops.CompleteAny(ec.CancellationToken);
@@ -178,7 +179,7 @@ namespace Sunlighter.AsyncQueueLib
 
                         loop.ForEach
                         (
-                            j => { ops = ops.AddIf(!atEof[j], j, Utils.StartableGet<T, Option<T>>(sources[j], a => new Some<T>(a), new None<T>())); }
+                            j => { ops = ops.AddIf(!atEof[j], j, Utils.StartableGet<T, Option<T>>(sources[j], a => Option<T>.Some(a), Option<T>.None)); }
                         );
 
                         Tuple<int, Option<T>> result = await ops.CompleteAny(ec.CancellationToken);

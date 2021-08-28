@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sunlighter.OptionLib;
+using System;
 using System.Collections.Immutable;
 
 namespace Sunlighter.AsyncQueueLib
@@ -74,11 +75,11 @@ namespace Sunlighter.AsyncQueueLib
             {
                 T value = itemMap[id];
                 itemMap = itemMap.Remove(id);
-                return new Some<T>(value);
+                return Option<T>.Some(value);
             }
             else
             {
-                return new None<T>();
+                return Option<T>.None;
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sunlighter.OptionLib;
+using System;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -147,7 +148,7 @@ namespace Sunlighter.AsyncQueueLib
                         if (succeeded.ItemCount == 0)
                         {
                             queue.ReleaseRead(0);
-                            return new None<T>();
+                            return Option<T>.None;
                         }
                         else
                         {
@@ -169,7 +170,7 @@ namespace Sunlighter.AsyncQueueLib
                                 throw new OperationCanceledException(ctoken);
                             }
 
-                            return new Some<T>(((AcquireReadSucceeded<T>)succeeded).Items[0]);
+                            return Option<T>.Some(((AcquireReadSucceeded<T>)succeeded).Items[0]);
                         }
                     }
                 ),
