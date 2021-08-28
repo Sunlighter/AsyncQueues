@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AsyncQueueLib\AsyncQueueLib.csproj" />
+    <ProjectReference Include="..\Sunlighter.AsyncQueueLib\Sunlighter.AsyncQueueLib.csproj" />
   </ItemGroup>
 
 </Project>
