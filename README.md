@@ -155,6 +155,11 @@ called. Therefore, the ``PostResult`` extension methods have been kept.
 
 A compiled version of this code is available on NuGet as **Sunlighter.AsyncQueueLib**.
 
+Version 2.0 incorporates a breaking change: because I was using an `Option<T>` class in some of my other libraries, I
+was getting clashes between multiple `Option<T>` types, so I decided to consolidate the `Option<T>` types into a
+single library called **Sunlighter.OptionLib**. The new **AsyncQueueLib** uses **OptionLib** rather than defining its
+own `Option<T>` type. The `Option<T>` class in **OptionLib** differs from the old `Option<T>` class.
+
 ## A Personal Note
 
 My résumé includes a reference to a Queue Service I wrote for an employer. This is **not** that service. I don't even

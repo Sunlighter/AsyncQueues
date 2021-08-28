@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Sunlighter</Authors>
+    <Description>Option type for use by other libraries</Description>
+    <Copyright>Copyright © 2021</Copyright>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Sunlighter/AsyncQueues</PackageProjectUrl>
+    <PackageTags>option</PackageTags>
   </PropertyGroup>
 
 </Project>
