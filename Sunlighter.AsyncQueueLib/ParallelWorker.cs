@@ -11,12 +11,12 @@ namespace Sunlighter.AsyncQueueLib
 {
     public class ParallelWorker
     {
-        private object syncRoot;
-        private int capacity;
+        private readonly object syncRoot;
+        private readonly int capacity;
         private ImmutableHashSet<int> idleWorkers;
         private ImmutableHashSet<int> busyWorkers;
 
-        private CancellableQueue<WaitingWorkItem> waitingWorkItems;
+        private readonly CancellableQueue<WaitingWorkItem> waitingWorkItems;
 
         private class WaitingWorkItem
         {

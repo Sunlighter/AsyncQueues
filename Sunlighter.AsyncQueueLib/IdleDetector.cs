@@ -10,9 +10,9 @@ namespace Sunlighter.AsyncQueueLib
 {
     public class IdleDetector
     {
-        private object syncRoot;
+        private readonly object syncRoot;
         private int referenceCount;
-        private CancellableQueue<Waiter> waiters;
+        private readonly CancellableQueue<Waiter> waiters;
 
         private class Waiter
         {

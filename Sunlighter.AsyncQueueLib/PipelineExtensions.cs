@@ -208,7 +208,7 @@ namespace Sunlighter.AsyncQueueLib
 
         private class IndexedSource<T> : IQueueSource<Tuple<int, T>>
         {
-            private IQueueSource<T> parent;
+            private readonly IQueueSource<T> parent;
             private int index;
 
             public IndexedSource(IQueueSource<T> parent)
@@ -250,8 +250,8 @@ namespace Sunlighter.AsyncQueueLib
 
         private class SynchronousSelectedSource<T, U> : IQueueSource<U>
         {
-            private IQueueSource<T> parent;
-            private Func<T, U> func;
+            private readonly IQueueSource<T> parent;
+            private readonly Func<T, U> func;
 
             public SynchronousSelectedSource(IQueueSource<T> parent, Func<T, U> func)
             {

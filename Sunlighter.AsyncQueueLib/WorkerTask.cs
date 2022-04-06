@@ -245,10 +245,10 @@ namespace Sunlighter.AsyncQueueLib
 
     public class ForEachInfo<T>
     {
-        private T item;
-        private int inputIndex;
-        private int workerId;
-        private CancellationToken ctoken;
+        private readonly T item;
+        private readonly int inputIndex;
+        private readonly int workerId;
+        private readonly CancellationToken ctoken;
 
         public ForEachInfo(T item, int inputIndex, int workerId, CancellationToken ctoken)
         {
@@ -266,8 +266,8 @@ namespace Sunlighter.AsyncQueueLib
 
     public class RoundRobinLoopGenerator
     {
-        private int size;
-        private InputPriorities inputPriorities;
+        private readonly int size;
+        private readonly InputPriorities inputPriorities;
         private int counter;
 
         public RoundRobinLoopGenerator(int size, InputPriorities inputPriorities)
@@ -302,9 +302,9 @@ namespace Sunlighter.AsyncQueueLib
 
     public class ExceptionCollector
     {
-        private object syncRoot;
+        private readonly object syncRoot;
         private ImmutableList<Exception> exceptions;
-        private CancellationTokenSource cts;
+        private readonly CancellationTokenSource cts;
 
         public ExceptionCollector()
         {

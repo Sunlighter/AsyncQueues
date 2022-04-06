@@ -53,7 +53,7 @@ namespace Sunlighter.AsyncQueueLib
 
     public sealed class AcquireReadFaulted : AcquireReadResult
     {
-        private Exception exc;
+        private readonly Exception exc;
 
         public AcquireReadFaulted(Exception exc) : base(ResultType.Faulted)
         {
@@ -100,7 +100,7 @@ namespace Sunlighter.AsyncQueueLib
 
     public sealed class AcquireReadSucceeded<T> : AcquireReadSucceeded
     {
-        private ImmutableList<T> items;
+        private readonly ImmutableList<T> items;
 
         public AcquireReadSucceeded(BigInteger offset, ImmutableList<T> items)
             : base(offset)
@@ -155,7 +155,7 @@ namespace Sunlighter.AsyncQueueLib
 
     public sealed class AcquireWriteFaulted : AcquireWriteResult
     {
-        private Exception exc;
+        private readonly Exception exc;
 
         public AcquireWriteFaulted(Exception exc) : base(ResultType.Faulted)
         {
@@ -178,7 +178,7 @@ namespace Sunlighter.AsyncQueueLib
     public sealed class AcquireWriteSucceeded : AcquireWriteResult
     {
         private BigInteger offset;
-        private int maxItemCount;
+        private readonly int maxItemCount;
 
         public AcquireWriteSucceeded(BigInteger offset, int maxItemCount) : base(ResultType.Succeeded)
         {
@@ -216,15 +216,15 @@ namespace Sunlighter.AsyncQueueLib
 
     public class AsyncQueue<T> : IQueueSource<T>, IQueueSink<T>
     {
-        private object syncRoot;
-        private int? capacity;
+        private readonly object syncRoot;
+        private readonly int? capacity;
         private BigInteger readPtr;
         private int? readLocked;
         private int? writeLocked;
         private bool eofSignaled;
         private ImmutableList<T> items;
-        private CancellableQueue<WaitingRead> waitingReads;
-        private CancellableQueue<WaitingWrite> waitingWrites;
+        private readonly CancellableQueue<WaitingRead> waitingReads;
+        private readonly CancellableQueue<WaitingWrite> waitingWrites;
 
         private class WaitingRead
         {

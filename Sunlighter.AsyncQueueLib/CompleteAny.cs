@@ -15,8 +15,8 @@ namespace Sunlighter.AsyncQueueLib
 
     public class CancellableOperation<V> : IDisposable
     {
-        private Task<CancellableResult<V>> task;
-        private CancellationTokenSource cts;
+        private readonly Task<CancellableResult<V>> task;
+        private readonly CancellationTokenSource cts;
 
         public CancellableOperation(Task<CancellableResult<V>> task, CancellationTokenSource cts)
         {
@@ -42,9 +42,9 @@ namespace Sunlighter.AsyncQueueLib
     {
         private class GetCancellableResult<U, V> : CancellableResult<V>
         {
-            private IQueueSource<U> queue;
-            private U value;
-            private Func<U, V> convertResult;
+            private readonly IQueueSource<U> queue;
+            private readonly U value;
+            private readonly Func<U, V> convertResult;
             private bool done;
 
             public GetCancellableResult(IQueueSource<U> queue, U value, Func<U, V> convertResult)
@@ -84,8 +84,8 @@ namespace Sunlighter.AsyncQueueLib
 
         private class GetEofCancellableResult<U, V> : CancellableResult<V>
         {
-            private IQueueSource<U> queue;
-            private V eofResult;
+            private readonly IQueueSource<U> queue;
+            private readonly V eofResult;
             private bool done;
 
             public GetEofCancellableResult(IQueueSource<U> queue, V eofResult)
@@ -180,9 +180,9 @@ namespace Sunlighter.AsyncQueueLib
 
         private class PutCancellableResult<U, V> : CancellableResult<V>
         {
-            private IQueueSink<U> queue;
-            private U valueToPut;
-            private V successfulPut;
+            private readonly IQueueSink<U> queue;
+            private readonly U valueToPut;
+            private readonly V successfulPut;
             private bool done;
 
             public PutCancellableResult(IQueueSink<U> queue, U valueToPut, V successfulPut)
